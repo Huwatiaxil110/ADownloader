@@ -24,5 +24,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation rootProject.ext.dep.okhttp
-    
+    implementation rootProject.ext.dep.supportAnnotations
+    implementation rootProject.ext.dep.support_v7
+    implementation rootProject.ext.dep.json
 }
