@@ -21,9 +21,9 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation rootProject.ext.dep.support_v7
     implementation rootProject.ext.dep.constaraint_layout
 
+    implementation project(':adownlader')
 }
