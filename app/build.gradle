@@ -1,0 +1,29 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        applicationId       "com.yzsn.sample"
+        minSdkVersion       rootProject.ext.minSdkVersion
+        targetSdkVersion    rootProject.ext.targetSdkVersion
+        versionCode         rootProject.ext.versionCode
+        versionName         rootProject.ext.versionName
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation rootProject.ext.dep.support_v7
+    implementation rootProject.ext.dep.constaraint_layout
+
+}

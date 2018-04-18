@@ -1,0 +1,21 @@
+ext {
+    compileSdkVersion = 27
+    buildToolsVersion = '27.0.0'
+    minSdkVersion = 21
+    targetSdkVersion = 27
+    sourceCompatibilityVersion = JavaVersion.VERSION_1_8
+    targetCompatibilityVersion = JavaVersion.VERSION_1_8
+    okhttpVersion = '3.10.0'
+    supportLibrariesVersion = '27.1.1'
+    supportConstraintLayout = "1.1.0"
+
+    versionCode = 1
+    versionName = "1.0"
+
+    dep = [
+            okhttp            : "com.squareup.okhttp3:okhttp:$okhttpVersion",
+            support_v7        : "com.android.support:appcompat-v7:$supportLibrariesVersion",
+            constaraint_layout: "com.android.support.constraint:constraint-layout:$supportConstraintLayout",
+    ]
+
+}
