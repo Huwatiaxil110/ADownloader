@@ -6,6 +6,7 @@ import android.telephony.TelephonyManager;
 
 import com.yzsn.adownlader.common.Priority;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -64,6 +65,14 @@ public class ADExecutor extends ThreadPoolExecutor{
     private void setThreadCount(int threadCount) {
         setCorePoolSize(threadCount);
         setMaximumPoolSize(threadCount);
+    }
+
+    @Override
+    public Future<?> submit(Runnable task) {
+        ADownloadFutureTask futureTask = new ADownloadFutureTask((CoreRunnable) task);
+        execute(futureTask);
+
+        return futureTask;
     }
 
     private static final class ADownloadFutureTask extends FutureTask<CoreRunnable> implements Comparable<ADownloadFutureTask> {

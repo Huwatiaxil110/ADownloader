@@ -6,27 +6,27 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
         <Button
+            android:id="@+id/button_one"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:onClick="startTest"
-            android:text="start test" />
+            android:layout_height="50dp"
+            android:onClick="startDownload"
+            android:text="start download"/>
 
         <Button
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:onClick="startScrollViewActivity"
-            android:text="ScrollViewActivity" />
+            android:layout_height="50dp"
+            android:onClick="cancelDownload"
+            android:text="cancel download"/>
 
         <Button
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:onClick="clickButton3"
-            android:text="button3" />
+            android:layout_height="50dp"
+            android:onClick="buttonThree"
+            android:text="buttonThree"/>
 
     </LinearLayout>
-
 </ScrollView>

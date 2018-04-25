@@ -1,15 +1,28 @@
 package com.yzsn.adownlader.common;
 
-import com.yzsn.adownlader.listener.ProcessListener;
+import com.yzsn.adownlader.core.ADRequestQueue;
+import com.yzsn.adownlader.core.ExecutorCenter;
+import com.yzsn.adownlader.error.ADError;
+import com.yzsn.adownlader.listener.AnalyticsListener;
+import com.yzsn.adownlader.listener.ProgressListener;
 import com.yzsn.adownlader.listener.SpeedListener;
 import com.yzsn.adownlader.listener.StatuListener;
+import com.yzsn.adownlader.util.log.L;
 
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
+import okhttp3.CacheControl;
+import okhttp3.Call;
+import okhttp3.Headers;
 import okhttp3.OkHttpClient;
+import okio.Okio;
 
 /**
  * 下载请求类
@@ -28,17 +41,23 @@ public class ADRequest {
     private String userAgent;
     private OkHttpClient okHttpClient;
     private URLConnection urlConnection;
-    private HashMap<String, String> headersMap;
+    private HashMap<String, List<String>> headersMap;
+    private CacheControl mCacheControl;
 
+    private AnalyticsListener analyticsListener;
     private StatuListener statuListener;
     private SpeedListener speedListener;
-    private ProcessListener processListener;
+    private ProgressListener progressListener;
+
+    private Executor execute;
 
     private boolean isCancelled;
     private int sequenceNumber;
     private boolean isRunning;
+    private boolean isDelivered;
 
     private Future future;
+    private Call call;
 
     public ADRequest(Builder builder) {
         this.url = builder.url;
@@ -53,34 +72,161 @@ public class ADRequest {
         this.okHttpClient = builder.okHttpClient;
         this.urlConnection = builder.urlConnection;
         this.headersMap = builder.headersMap;
+        this.mCacheControl = builder.cacheControl;
 
+        this.analyticsListener = builder.analyticsListener;
         this.statuListener = builder.statuListener;
         this.speedListener = builder.speedListener;
-        this.processListener = builder.processListener;
+        this.progressListener = builder.progressListener;
+
+        this.execute = builder.executor;
     }
 
-    public void startDownload(){
-
+    public void start(){
+        ADRequestQueue.getInstance().addRequest(this);
     }
 
     public void cancel(boolean isForceCancel){
-        // TODO: 2018/4/24
+        isCancelled = true;
+        isRunning = false;
+        
+        if(call != null){
+            call.cancel();
+        }
+        if(future != null){
+            future.cancel(true);
+        }
+        if(!isDelivered){
+            deliverError(new ADError());
+        }
     }
 
     public boolean isCanceled(){
-        // TODO: 2018/4/24
         return isCancelled;
     }
 
     public boolean isRunning(){
-        // TODO: 2018/4/24
         return isRunning;
     }
 
     public void destroy() {
+        analyticsListener = null;
         statuListener = null;
         speedListener = null;
-        processListener = null;
+        progressListener = null;
+    }
+
+    public ADError parseNetworkError(ADError anError) {
+        try {
+            if (anError.getResponse() != null && anError.getResponse().body() != null
+                    && anError.getResponse().body().source() != null) {
+                anError.setErrorBody(Okio.buffer(anError.getResponse().body().source()).readUtf8());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return anError;
+    }
+
+    public void downloadCompleted() {
+        L.e(true, "");
+
+        isDelivered = true;
+        if (statuListener != null) {
+            if (!isCancelled) {
+                if (execute != null) {
+                    execute.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (statuListener != null) {
+                                statuListener.onComplete();
+                            }
+                            finish();
+                        }
+                    });
+                } else {
+                    ExecutorCenter.getInstance().getExecutorSupplier().forUIDownloadTask().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (statuListener != null) {
+                                statuListener.onComplete();
+                            }
+                            finish();
+                        }
+                    });
+                }
+            } else {
+                deliverError(new ADError());
+                finish();
+            }
+        } else {
+            finish();
+        }
+    }
+
+    public void deliverError(ADError error){
+        if (!isDelivered) {
+            if (isCancelled) {
+                error.setCancellationMessageInError();
+                error.setErrorCode(0);
+            }
+            statuListener.onError(error);
+        }
+        isDelivered = true;
+    }
+
+    public void finish() {
+        destroy();
+        ADRequestQueue.getInstance().finish(this);
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public String getFileDir() {
+        return fileDir;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public OkHttpClient getOkHttpClient() {
+        return okHttpClient;
+    }
+
+    public CacheControl getCacheControl() {
+        return mCacheControl;
+    }
+
+    public Headers getHeaders() {
+        Headers.Builder builder = new Headers.Builder();
+        try {
+            if (headersMap != null) {
+                Set<Map.Entry<String, List<String>>> entries = headersMap.entrySet();
+                for (Map.Entry<String, List<String>> entry : entries) {
+                    String name = entry.getKey();
+                    List<String> list = entry.getValue();
+                    if (list != null) {
+                        for (String value : list) {
+                            builder.add(name, value);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return builder.build();
     }
 
     public Object getTag() {
@@ -102,6 +248,30 @@ public class ADRequest {
         this.future = future;
     }
 
+    public AnalyticsListener getAnalyticsListener() {
+        return analyticsListener;
+    }
+
+    public StatuListener getStatuListener() {
+        return statuListener;
+    }
+
+    public SpeedListener getSpeedListener() {
+        return speedListener;
+    }
+
+    public ProgressListener getProgressListener() {
+        return progressListener;
+    }
+
+    public void setCall(Call call) {
+        this.call = call;
+    }
+
+    public Call getCall() {
+        return call;
+    }
+
     public static class Builder{
         private String url;
         private String fileDir;
@@ -114,11 +284,15 @@ public class ADRequest {
         private String userAgent;
         private OkHttpClient okHttpClient;
         private URLConnection urlConnection;
-        private HashMap<String, String> headersMap;
+        private HashMap<String, List<String>> headersMap;
+        private CacheControl cacheControl;
 
+        private AnalyticsListener analyticsListener;
         private StatuListener statuListener;
         private SpeedListener speedListener;
-        private ProcessListener processListener;
+        private ProgressListener progressListener;
+
+        private Executor executor;
 
         public Builder(String url, String fileDir, String fileName) {
             this.url = url;
@@ -183,15 +357,39 @@ public class ADRequest {
             return this;
         }
 
-        public Builder setHeadersMap(HashMap<String, String> headersMap) {
-            this.headersMap = (HashMap<String, String>) headersMap.clone();
+        public Builder setHeadersMap(HashMap<String, List<String>> headersMap) {
+            this.headersMap = headersMap;
             return this;
         }
+
         public Builder addHeader(String key, String value){
-            if(headersMap == null){
-                headersMap = new HashMap<>();
+            List<String> list = headersMap.get(key);
+            if (list == null) {
+                list = new ArrayList<>();
+                headersMap.put(key, list);
             }
-            headersMap.put(key, value);
+            if (!list.contains(value)) {
+                list.add(value);
+            }
+            return this;
+        }
+
+        public Builder addHeaders(Map<String, String> headerMap) {
+            if (headerMap != null) {
+                for (HashMap.Entry<String, String> entry : headerMap.entrySet()) {
+                    addHeader(entry.getKey(), entry.getValue());
+                }
+            }
+            return this;
+        }
+
+        public Builder setCacheControl(CacheControl mCacheControl) {
+            this.cacheControl = mCacheControl;
+            return this;
+        }
+
+        public Builder setAnalyticsListener(AnalyticsListener analyticsListener) {
+            this.analyticsListener = analyticsListener;
             return this;
         }
 
@@ -205,8 +403,13 @@ public class ADRequest {
             return this;
         }
 
-        public Builder setProcessListener(ProcessListener processListener) {
-            this.processListener = processListener;
+        public Builder setProgressListener(ProgressListener progressListener) {
+            this.progressListener = progressListener;
+            return this;
+        }
+
+        public Builder setExecutor(Executor mExecutor) {
+            this.executor = mExecutor;
             return this;
         }
 

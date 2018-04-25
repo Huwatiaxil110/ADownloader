@@ -108,9 +108,9 @@ public class ADRequestQueue {
         request.setSequenceNumber(getSequenceGenerator());
 
         if(request.getPriority() == Priority.IMMEDIATE){
-            request.setFuture(ExecutorCore.getInstance().getExecutorSupplier().forImmediateDownloadTask().submit(new CoreRunnable(request)));
+            request.setFuture(ExecutorCenter.getInstance().getExecutorSupplier().forImmediateDownloadTask().submit(new CoreRunnable(request)));
         }else{
-            request.setFuture(ExecutorCore.getInstance().getExecutorSupplier().forDownloadTask().submit(new CoreRunnable(request)));
+            request.setFuture(ExecutorCenter.getInstance().getExecutorSupplier().forDownloadTask().submit(new CoreRunnable(request)));
         }
 
         return request;

@@ -17,6 +17,8 @@ public class Test {
 
     private void hello(String url, String dirPath, String fileName){
 
+        AndroidNetworking.cancel("downloadTest");
+
         AndroidNetworking.download(url,dirPath,fileName)
                 .setTag("downloadTest")
                 .setPriority(Priority.MEDIUM)

@@ -5,19 +5,19 @@ import com.yzsn.adownlader.listener.ExecutorSupplier;
 /**
  * Created by zc on 2018/4/24.
  */
-public class ExecutorCore {
-    private static ExecutorCore sInstance = null;
+public class ExecutorCenter {
+    private static ExecutorCenter sInstance = null;
     private final ExecutorSupplier mExecutorSupplier;
 
-    private ExecutorCore() {
+    private ExecutorCenter() {
         this.mExecutorSupplier = new DefaultExecutorSupplier();
     }
 
-    public static ExecutorCore getInstance() {
+    public static ExecutorCenter getInstance() {
         if (sInstance == null) {
-            synchronized (ExecutorCore.class) {
+            synchronized (ExecutorCenter.class) {
                 if (sInstance == null) {
-                    sInstance = new ExecutorCore();
+                    sInstance = new ExecutorCenter();
                 }
             }
         }

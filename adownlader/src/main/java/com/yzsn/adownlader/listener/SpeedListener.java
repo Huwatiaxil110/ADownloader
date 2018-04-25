@@ -6,4 +6,5 @@ package com.yzsn.adownlader.listener;
  */
 
 public interface SpeedListener {
+
 }

@@ -5,5 +5,6 @@ package com.yzsn.adownlader.listener;
  * Created by zc on 2018/4/24.
  */
 
-public interface ProcessListener {
+public interface ProgressListener {
+    void onProgress(long bytesDownloaded, long totalBytes);
 }
