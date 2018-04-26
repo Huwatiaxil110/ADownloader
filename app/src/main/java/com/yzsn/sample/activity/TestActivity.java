@@ -2,15 +2,13 @@ package com.yzsn.sample.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.view.View;
-import android.widget.Toast;
 
 import com.yzsn.adownlader.ADownloader;
-import com.yzsn.adownlader.common.ADRequest;
 import com.yzsn.adownlader.error.ADError;
 import com.yzsn.adownlader.listener.AnalyticsListener;
+import com.yzsn.adownlader.listener.ParseFileNameListener;
 import com.yzsn.adownlader.listener.ProgressListener;
 import com.yzsn.adownlader.listener.SpeedListener;
 import com.yzsn.adownlader.listener.StatuListener;
@@ -42,6 +40,7 @@ public class TestActivity extends Activity{
                 .setAnalyticsListener(new TestAnalyticsListener())
                 .setStatuListener(new TestStatuListener())
                 .setSpeedListener(new TestSpeedListener())
+                .setParseFileNameListener(new TestParseFileNameListener())
                 .build()
                 .start();
     }
@@ -85,4 +84,16 @@ public class TestActivity extends Activity{
             L.e("已下载字节大小size = " + bytesDownloaded + "; 总大小size = " + totalBytes);
         }
     }
+
+    class TestParseFileNameListener implements ParseFileNameListener{
+        @Override
+        public String getFileNameFromHeader(String contentDisposition) {
+            L.e(true, "");
+            L.e("contentDisposition = " + contentDisposition);
+            //attachment; filename=ADownloader-master.zip
+            String fileName = contentDisposition.substring(contentDisposition.indexOf("filename=" + 10));
+            return fileName;
+        }
+    }
+
 }

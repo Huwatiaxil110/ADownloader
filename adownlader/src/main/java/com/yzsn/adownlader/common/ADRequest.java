@@ -4,6 +4,7 @@ import com.yzsn.adownlader.core.ADRequestQueue;
 import com.yzsn.adownlader.core.ExecutorCenter;
 import com.yzsn.adownlader.error.ADError;
 import com.yzsn.adownlader.listener.AnalyticsListener;
+import com.yzsn.adownlader.listener.ParseFileNameListener;
 import com.yzsn.adownlader.listener.ProgressListener;
 import com.yzsn.adownlader.listener.SpeedListener;
 import com.yzsn.adownlader.listener.StatuListener;
@@ -48,6 +49,7 @@ public class ADRequest {
     private StatuListener statuListener;
     private SpeedListener speedListener;
     private ProgressListener progressListener;
+    private ParseFileNameListener parseFileNameListener;
 
     private Executor execute;
 
@@ -78,6 +80,7 @@ public class ADRequest {
         this.statuListener = builder.statuListener;
         this.speedListener = builder.speedListener;
         this.progressListener = builder.progressListener;
+        this.parseFileNameListener = builder.parseFileNameListener;
 
         this.execute = builder.executor;
     }
@@ -188,6 +191,10 @@ public class ADRequest {
         return fileDir;
     }
 
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
     public String getFileName() {
         return fileName;
     }
@@ -268,6 +275,10 @@ public class ADRequest {
         return progressListener;
     }
 
+    public ParseFileNameListener getParseFileNameListener() {
+        return parseFileNameListener;
+    }
+
     public void setCall(Call call) {
         this.call = call;
     }
@@ -295,6 +306,7 @@ public class ADRequest {
         private StatuListener statuListener;
         private SpeedListener speedListener;
         private ProgressListener progressListener;
+        private ParseFileNameListener parseFileNameListener;
 
         private Executor executor;
 
@@ -409,6 +421,11 @@ public class ADRequest {
 
         public Builder setProgressListener(ProgressListener progressListener) {
             this.progressListener = progressListener;
+            return this;
+        }
+
+        public Builder setParseFileNameListener(ParseFileNameListener parseFileNameListener) {
+            this.parseFileNameListener = parseFileNameListener;
             return this;
         }
 

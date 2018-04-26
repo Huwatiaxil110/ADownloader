@@ -1,6 +1,7 @@
 package com.yzsn.adownlader.core;
 
 import android.net.TrafficStats;
+import android.text.TextUtils;
 
 import com.yzsn.adownlader.common.ADConstants;
 import com.yzsn.adownlader.common.ADRequest;
@@ -91,6 +92,17 @@ public class CoreWorking {
             final long startBytes = TrafficStats.getTotalRxBytes();
             okHttpResponse = request.getCall().execute();
 
+            //解析文件名
+            if(TextUtils.isEmpty(request.getFileName()) && request.getParseFileNameListener() != null){
+                String contentDisposition = okHttpResponse.header("Content-Disposition");
+                String fileName = request.getParseFileNameListener().getFileNameFromHeader(contentDisposition);
+                if(!TextUtils.isEmpty(fileName)){
+                    request.setFileName(fileName);
+                }else{
+                    throw new ADError(new NullPointerException("filename not set and no filename from response"));
+                }
+            }
+
             AssistUtil.saveFile(okHttpResponse, request.getFileDir(), request.getFileName());
 
             final long timeTaken = System.currentTimeMillis() - startTime;
@@ -137,4 +149,5 @@ public class CoreWorking {
             }
         }
     }
+
 }
