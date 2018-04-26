@@ -30,10 +30,6 @@ public class ADRequestQueue {
         return sInstance;
     }
 
-    public int getSequenceGenerator() {
-        return mSequenceGenerator.incrementAndGet();
-    }
-
     public interface RequestFilter {
         boolean apply(ADRequest request);
     }
@@ -105,7 +101,7 @@ public class ADRequestQueue {
 
     public ADRequest addRequest(ADRequest request){
         mRequests.add(request);
-        request.setSequenceNumber(getSequenceGenerator());
+        request.setSequenceNumber(mSequenceGenerator.incrementAndGet());
 
         if(request.getPriority() == Priority.IMMEDIATE){
             request.setFuture(ExecutorCenter.getInstance().getExecutorSupplier().forImmediateDownloadTask().submit(new CoreRunnable(request)));

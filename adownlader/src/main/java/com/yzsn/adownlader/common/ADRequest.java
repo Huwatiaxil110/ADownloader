@@ -116,16 +116,16 @@ public class ADRequest {
         progressListener = null;
     }
 
-    public ADError parseNetworkError(ADError anError) {
+    public ADError parseNetworkError(ADError error) {
         try {
-            if (anError.getResponse() != null && anError.getResponse().body() != null
-                    && anError.getResponse().body().source() != null) {
-                anError.setErrorBody(Okio.buffer(anError.getResponse().body().source()).readUtf8());
+            if (error.getResponse() != null && error.getResponse().body() != null
+                    && error.getResponse().body().source() != null) {
+                error.setErrorBody(Okio.buffer(error.getResponse().body().source()).readUtf8());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return anError;
+        return error;
     }
 
     public void downloadCompleted() {
@@ -190,6 +190,10 @@ public class ADRequest {
 
     public String getFileName() {
         return fileName;
+    }
+
+    public boolean isIgnoreSSL() {
+        return ignoreSSL;
     }
 
     public void setUserAgent(String userAgent) {
@@ -278,7 +282,7 @@ public class ADRequest {
         private String fileName;
         private ArrayList<String> fileList;
         private Object tag;
-        private Priority priority;
+        private Priority priority = Priority.MEDIUM;
 
         private boolean ignoreSSL;
         private String userAgent;

@@ -22,4 +22,6 @@ public class ADownloader {
     public static void cancel(Object tag){
         ADRequestQueue.getInstance().cancelRequestByTag(tag, false);
     }
+
+
 }

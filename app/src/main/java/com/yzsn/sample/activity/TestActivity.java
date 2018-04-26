@@ -36,7 +36,6 @@ public class TestActivity extends Activity{
         String fileDir = this.getApplicationContext().getExternalCacheDir().getAbsolutePath();
         String fileName = "kugou_setup.exe";
 
-
         ADownloader.prepareDownLoad(url, fileDir, fileName)
                 .setTag(TAG)
                 .setProgressListener(new TestProgressListener())
@@ -75,15 +74,15 @@ public class TestActivity extends Activity{
     class TestAnalyticsListener implements AnalyticsListener{
         @Override
         public void onReceived(long timeTakenInMillis, long bytesSent, long bytesReceived, boolean isFromCache) {
-            L.e("timeTakenInMillis = " + timeTakenInMillis + "; bytesSent = " + bytesSent);
-            L.e("bytesReceived = " + bytesReceived + "; isFromCache = " + isFromCache);
+            L.e("耗时time = " + timeTakenInMillis + "; 发送字节size = " + bytesSent);
+            L.e("收到字节size = " + bytesReceived + "; 是否取自缓存isFromCache = " + isFromCache);
         }
     }
 
     class TestProgressListener implements ProgressListener{
         @Override
         public void onProgress(long bytesDownloaded, long totalBytes) {
-            L.e("bytesDownloaded = " + bytesDownloaded + "; totalBytes = " + totalBytes);
+            L.e("已下载字节大小size = " + bytesDownloaded + "; 总大小size = " + totalBytes);
         }
     }
 }

@@ -2,11 +2,13 @@ package com.yzsn.adownlader.core;
 
 import android.net.TrafficStats;
 
-import com.androidnetworking.error.ANError;
 import com.yzsn.adownlader.common.ADConstants;
 import com.yzsn.adownlader.common.ADRequest;
 import com.yzsn.adownlader.common.NetConnectionManager;
+import com.yzsn.adownlader.error.ADError;
 import com.yzsn.adownlader.util.AssistUtil;
+import com.yzsn.adownlader.util.SSLUtil;
+import com.yzsn.adownlader.util.log.L;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,21 +20,19 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static com.androidnetworking.internal.InternalNetworking.getClient;
-
 /**
  * Created by zc on 2018/4/25.
  */
 
 public class CoreWorking {
-    public static OkHttpClient sHttpClient = getClient();
+    public static OkHttpClient mOkHttpClient = getClient();
     public static String sUserAgent = null;
 
     public static OkHttpClient getClient() {
-        if (sHttpClient == null) {
+        if (mOkHttpClient == null) {
             return getDefaultClient();
         }
-        return sHttpClient;
+        return mOkHttpClient;
     }
 
     public static OkHttpClient getDefaultClient() {
@@ -43,7 +43,7 @@ public class CoreWorking {
                 .build();
     }
 
-    public static Response performRequest(final ADRequest request) throws ANError {
+    public static Response performRequest(final ADRequest request) throws ADError {
         Request okHttpRequest;
         Response okHttpResponse;
         try {
@@ -56,9 +56,9 @@ public class CoreWorking {
             okHttpRequest = builder.build();
 
             OkHttpClient okHttpClient;
-
+            OkHttpClient.Builder okHttpClientBuilder;
             if (request.getOkHttpClient() != null) {
-                okHttpClient = request.getOkHttpClient().newBuilder().cache(sHttpClient.cache())
+                okHttpClientBuilder = request.getOkHttpClient().newBuilder().cache(mOkHttpClient.cache())
                         .addNetworkInterceptor(new Interceptor() {
                             @Override
                             public Response intercept(Chain chain) throws IOException {
@@ -67,9 +67,9 @@ public class CoreWorking {
                                         .body(new ResponseProgressBody(originalResponse.body(), request.getProgressListener()))
                                         .build();
                             }
-                        }).build();
+                        });
             } else {
-                okHttpClient = sHttpClient.newBuilder()
+                okHttpClientBuilder = mOkHttpClient.newBuilder()
                         .addNetworkInterceptor(new Interceptor() {
                             @Override
                             public Response intercept(Chain chain) throws IOException {
@@ -78,13 +78,21 @@ public class CoreWorking {
                                         .body(new ResponseProgressBody(originalResponse.body(), request.getProgressListener()))
                                         .build();
                             }
-                        }).build();
+                        });
             }
+
+            if(request.isIgnoreSSL()){  //不理会证书问题
+                okHttpClientBuilder.sslSocketFactory(SSLUtil.createSSLSocketFactory()).hostnameVerifier(new SSLUtil.TrustAllHostnameVerifier());
+            }
+            okHttpClient = okHttpClientBuilder.build();
+
             request.setCall(okHttpClient.newCall(okHttpRequest));
             final long startTime = System.currentTimeMillis();
             final long startBytes = TrafficStats.getTotalRxBytes();
             okHttpResponse = request.getCall().execute();
+
             AssistUtil.saveFile(okHttpResponse, request.getFileDir(), request.getFileName());
+
             final long timeTaken = System.currentTimeMillis() - startTime;
             if (okHttpResponse.cacheResponse() == null) {
                 final long finalBytes = TrafficStats.getTotalRxBytes();
@@ -100,6 +108,7 @@ public class CoreWorking {
                 AssistUtil.sendAnalytics(request.getAnalyticsListener(), timeTaken, -1, 0, true);
             }
         } catch (IOException ioe) {
+            L.e(true, "");
             try {
                 File destinationFile = new File(request.getFileDir() + File.separator + request.getFileName());
                 if (destinationFile.exists()) {
@@ -108,7 +117,7 @@ public class CoreWorking {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            throw new ANError(ioe);
+            throw new ADError(ioe);
         }
         return okHttpResponse;
     }
