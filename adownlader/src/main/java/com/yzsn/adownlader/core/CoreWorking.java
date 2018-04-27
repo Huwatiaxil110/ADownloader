@@ -26,8 +26,7 @@ import okhttp3.Response;
  */
 
 public class CoreWorking {
-    public static OkHttpClient mOkHttpClient = getClient();
-    public static String sUserAgent = null;
+    public static OkHttpClient mOkHttpClient;
 
     public static OkHttpClient getClient() {
         if (mOkHttpClient == null) {
@@ -60,26 +59,9 @@ public class CoreWorking {
             OkHttpClient.Builder okHttpClientBuilder;
             if (request.getOkHttpClient() != null) {
                 okHttpClientBuilder = request.getOkHttpClient().newBuilder().cache(mOkHttpClient.cache())
-                        .addNetworkInterceptor(new Interceptor() {
-                            @Override
-                            public Response intercept(Chain chain) throws IOException {
-                                Response originalResponse = chain.proceed(chain.request());
-                                return originalResponse.newBuilder()
-                                        .body(new ResponseProgressBody(originalResponse.body(), request.getProgressListener()))
-                                        .build();
-                            }
-                        });
+                        .addNetworkInterceptor(new ProgressInterceptor(request));
             } else {
-                okHttpClientBuilder = mOkHttpClient.newBuilder()
-                        .addNetworkInterceptor(new Interceptor() {
-                            @Override
-                            public Response intercept(Chain chain) throws IOException {
-                                Response originalResponse = chain.proceed(chain.request());
-                                return originalResponse.newBuilder()
-                                        .body(new ResponseProgressBody(originalResponse.body(), request.getProgressListener()))
-                                        .build();
-                            }
-                        });
+                okHttpClientBuilder = mOkHttpClient.newBuilder().addNetworkInterceptor(new ProgressInterceptor(request));
             }
 
             if(request.isIgnoreSSL()){  //不理会证书问题
@@ -137,9 +119,6 @@ public class CoreWorking {
     public static void addHeadersToRequestBuilder(Request.Builder builder, ADRequest request) {
         if (request.getUserAgent() != null) {
             builder.addHeader(ADConstants.USER_AGENT, request.getUserAgent());
-        } else if (sUserAgent != null) {
-            request.setUserAgent(sUserAgent);
-            builder.addHeader(ADConstants.USER_AGENT, sUserAgent);
         }
         Headers requestHeaders = request.getHeaders();
         if (requestHeaders != null) {
@@ -147,6 +126,22 @@ public class CoreWorking {
             if (request.getUserAgent() != null && !requestHeaders.names().contains(ADConstants.USER_AGENT)) {
                 builder.addHeader(ADConstants.USER_AGENT, request.getUserAgent());
             }
+        }
+    }
+
+    private static class ProgressInterceptor implements Interceptor{
+        ADRequest request;
+
+        public ProgressInterceptor(ADRequest request) {
+            this.request = request;
+        }
+
+        @Override
+        public Response intercept(Chain chain) throws IOException {
+            Response originalResponse = chain.proceed(chain.request());
+            return originalResponse.newBuilder()
+                    .body(new ResponseProgressBody(originalResponse.body(), request.getProgressListener()))
+                    .build();
         }
     }
 
